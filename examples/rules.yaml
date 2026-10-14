@@ -1,0 +1,10 @@
+columns:
+  rotor_speed:
+    range:
+      min: 0
+      max: 22.5
+    notNull: {}
+  power_kw:
+    range:
+      min: 0
+      max: 2500
