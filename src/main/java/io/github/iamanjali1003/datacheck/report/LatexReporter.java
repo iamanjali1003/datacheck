@@ -62,13 +62,17 @@ public final class LatexReporter implements Reporter {
     }
 
     private static String escape(String text) {
-        return text.replace("\\", "\\textbackslash{}")
-                   .replace("&", "\\&")
-                   .replace("%", "\\%")
-                   .replace("$", "\\$")
-                   .replace("#", "\\#")
-                   .replace("_", "\\_")
-                   .replace("{", "\\{")
-                   .replace("}", "\\}");
+        StringBuilder escaped = new StringBuilder(text.length());
+
+        for (char c : text.toCharArray()) {
+            switch (c) {
+                case '\\' -> escaped.append("\\textbackslash{}");
+                case '^' -> escaped.append("\\textasciicircum{}");
+                case '~' -> escaped.append("\\textasciitilde{}");
+                case '{', '}', '&', '%', '$', '#', '_' -> escaped.append('\\').append(c);
+                default -> escaped.append(c);
+            }
+        }
+        return escaped.toString();
     }
 }
