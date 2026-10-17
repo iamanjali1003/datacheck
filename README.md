@@ -1,3 +1,10 @@
+```
+    _      _           _           _
+ __| |__ _| |_ __ _ __| |_  ___ __| |__
+/ _` / _` |  _/ _` / _| ' \/ -_) _| / /
+\__,_\__,_|\__\__,_\__|_||_\___\__|_\_\
+```
+
 # datacheck
 
 A command line tool that validates a CSV file against rules written in YAML,
@@ -90,6 +97,40 @@ java -jar target/datacheck.jar examples/signals.csv --spec examples/rules.yaml
 ```
 
 ## How it is put together
+
+```
+   data.csv                rules.yaml
+       |                        |
+       v                        v
+   +---------+            +---------+
+   | Dataset |            |  Spec   |
+   +---------+            +---------+
+        \                     /
+         \                   /
+          v                 v
+          +-----------------+
+          |     Engine      |
+          +-----------------+
+                   |
+                   |  looks each rule up by the name
+                   |  used in the spec (ServiceLoader)
+                   v
+   +-------+---------+--------+---------+-----------+
+   | range | notNull | unique | matches | monotonic |
+   +-------+---------+--------+---------+-----------+
+                   |
+                   |  one RuleResult per column and rule
+                   v
+             +-----------+
+             |  Report   |
+             +-----------+
+                   |
+                   |  Reporter, also found by ServiceLoader
+                   v
+      +------+------+------+-------+
+      | text | json | html | latex |
+      +------+------+------+-------+
+```
 
 ```
 src/main/java/io/github/iamanjali1003/datacheck/
