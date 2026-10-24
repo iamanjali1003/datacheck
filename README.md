@@ -26,8 +26,8 @@ The exit code says whether the data passed, so it can stop a build:
 | Exit code | Meaning |
 | --- | --- |
 | 0 | every check passed |
-| 1 | at least one check failed, or an input file could not be read |
-| 2 | the report format is not recognised |
+| 1 | at least one check failed |
+| 2 | the tool could not run: a file is missing or unreadable, or the report format is not recognised |
 
 ## Features
 

@@ -10,6 +10,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +25,9 @@ import java.util.concurrent.Callable;
         description = "Validate a CSV file against a YAML spec."
 )
 public final class Cli implements Callable<Integer> {
+
+    /** Exit code when the tool could not run at all, as opposed to a check failing. */
+    static final int CANNOT_RUN = 2;
 
     @Parameters(index = "0", description = "CSV file to check.")
     private Path data;
@@ -46,7 +50,7 @@ public final class Cli implements Callable<Integer> {
         if (reporter == null) {
             System.err.println("unknown format: " + report);
             System.err.println("available: " + String.join(", ", availableFormats()));
-            return 2;
+            return CANNOT_RUN;
         }
 
         StringBuilder out = new StringBuilder();
@@ -75,6 +79,22 @@ public final class Cli implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        System.exit(new CommandLine(new Cli()).execute(args));
+        System.exit(commandLine().execute(args));
+    }
+
+    /**
+     * Without a handler, picocli exits 1 when the command throws, which a build
+     * could not tell apart from a failed check. A file that cannot be read now
+     * exits {@link #CANNOT_RUN} with a one-line message instead of a stack trace.
+     */
+    static CommandLine commandLine() {
+        return new CommandLine(new Cli())
+                .setExecutionExceptionHandler((error, command, parseResult) -> {
+                    String message = error instanceof NoSuchFileException
+                            ? "no such file: " + error.getMessage()
+                            : error.getMessage();
+                    command.getErr().println("datacheck: " + message);
+                    return CANNOT_RUN;
+                });
     }
 }
