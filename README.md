@@ -1,14 +1,9 @@
-```
-    _      _           _           _
- __| |__ _| |_ __ _ __| |_  ___ __| |__
-/ _` / _` |  _/ _` / _| ' \/ -_) _| / /
-\__,_\__,_|\__\__,_\__|_||_\___\__|_\_\
-```
+![datacheck](.github/banner.png)
 
-# datacheck
+A command-line tool that validates a CSV file against rules written in YAML, and
+reports every check that failed.
 
-A command line tool that validates a CSV file against rules written in YAML,
-and reports what failed.
+## Overview
 
 ```bash
 datacheck examples/signals.csv --spec examples/rules.yaml
@@ -26,13 +21,41 @@ ok    power_kw / range
 2 check(s) failed
 ```
 
+The exit code says whether the data passed, so it can stop a build:
+
 | Exit code | Meaning |
 | --- | --- |
 | 0 | every check passed |
-| 1 | at least one check failed |
-| 2 | the tool could not run, for example an unknown format |
+| 1 | at least one check failed, or an input file could not be read |
+| 2 | the report format is not recognised |
 
-so it can sit in a build pipeline.
+## Features
+
+- Five rules: `range`, `notNull`, `unique`, `matches` and `monotonic`
+- Four report formats: text, JSON, HTML and LaTeX
+- Rules and formats are plugins, found at runtime, so adding one changes nothing that exists
+- A bad cell is reported with its row number instead of stopping the run
+
+## Tech stack
+
+| Area | Choice |
+| --- | --- |
+| Language | Java 21 |
+| Build | Maven, with the Shade plugin for a single runnable jar |
+| Command line | Picocli |
+| Spec parsing | Jackson YAML |
+| Tests | JUnit 5, AssertJ |
+| CI | GitHub Actions |
+
+## Getting started
+
+Needs JDK 21 and Maven.
+
+```bash
+mvn verify          # compile and run the tests
+mvn package         # also builds target/datacheck.jar
+java -jar target/datacheck.jar examples/signals.csv --spec examples/rules.yaml
+```
 
 ## Writing a spec
 
@@ -52,8 +75,6 @@ columns:
 ```
 
 Rules that need no configuration take an empty map.
-
-### Rules
 
 | Rule | Options | Checks |
 | --- | --- | --- |
@@ -86,17 +107,7 @@ datacheck data.csv --spec rules.yaml --report latex > report.tex
 pdflatex report.tex
 ```
 
-## Building
-
-Needs JDK 21 and Maven.
-
-```bash
-mvn verify          # compile and run the tests
-mvn package         # also builds target/datacheck.jar
-java -jar target/datacheck.jar examples/signals.csv --spec examples/rules.yaml
-```
-
-## How it is put together
+## How it works
 
 ```
    data.csv                rules.yaml
@@ -132,20 +143,6 @@ java -jar target/datacheck.jar examples/signals.csv --spec examples/rules.yaml
       +------+------+------+-------+
 ```
 
-```
-src/main/java/io/github/iamanjali1003/datacheck/
-├── Cli.java           entry point, argument parsing
-├── core/
-│   ├── Dataset.java   a CSV loaded into columns of strings
-│   ├── Spec.java      the YAML file, parsed
-│   ├── Rule.java      the interface every rule implements
-│   ├── Engine.java    applies the spec's rules to the dataset
-│   ├── RuleResult.java
-│   └── Report.java
-├── rules/             one class per rule
-└── report/            one class per output format
-```
-
 Two interfaces carry the design. `Rule` is a check that can run against a
 column. `Reporter` turns the resulting `Report` into one output format.
 
@@ -167,6 +164,22 @@ cell from stopping the whole run.
 
 Adding an output format is the same, against `Reporter`.
 
+## Project structure
+
+```
+src/main/java/io/github/iamanjali1003/datacheck/
+├── Cli.java           entry point, argument parsing
+├── core/
+│   ├── Dataset.java   a CSV loaded into columns of strings
+│   ├── Spec.java      the YAML file, parsed
+│   ├── Rule.java      the interface every rule implements
+│   ├── Engine.java    applies the spec's rules to the dataset
+│   ├── RuleResult.java
+│   └── Report.java
+├── rules/             one class per rule
+└── report/            one class per output format
+```
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 [Anjali](https://iamanjali1003.github.io)
